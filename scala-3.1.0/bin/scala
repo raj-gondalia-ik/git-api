@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+# Try to autodetect real location of the script
+if [ -z "${PROG_HOME-}" ] ; then
+  ## resolve links - $0 may be a link to PROG_HOME
+  PRG="$0"
+
+  # need this for relative symlinks
+  while [ -h "$PRG" ] ; do
+    ls=`ls -ld "$PRG"`
+    link=`expr "$ls" : '.*-> \(.*\)$'`
+    if expr "$link" : '/.*' > /dev/null; then
+      PRG="$link"
+    else
+      PRG="`dirname "$PRG"`/$link"
+    fi
+  done
+
+  saveddir=`pwd`
+
+  PROG_HOME=`dirname "$PRG"`/..
+
+  # make it fully qualified
+  PROG_HOME=`cd "$PROG_HOME" && pwd`
+
+  cd "$saveddir"
+fi
+
+source "$PROG_HOME/bin/common"
+
+# exec here would prevent onExit from being called, leaving terminal in unusable state
+compilerJavaClasspathArgs
+[ -z "${ConEmuPID-}" -o -n "${cygwin-}" ] && export MSYSTEM= PWD= # workaround for #12405
+eval "\"$JAVACMD\"" " $JAVA_OPTS -classpath \"$jvm_cp_args\"" "dotty.tools.MainGenericRunner" "-classpath \"$jvm_cp_args\"" "$@"
+scala_exit_status=$?
+
+
+onExit
